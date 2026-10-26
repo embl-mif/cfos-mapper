@@ -156,9 +156,11 @@ default `allen_mouse_25um`). `atlas.orientation` tells brainreg how the images l
 [brainglobe letters](https://brainglobe.info/documentation/setting-up/image-definition.html):
 where axis 0, 1 and 2 start. Ours is `sal`: plane 0 is dorsal (superior), y runs from anterior,
 x from the animal's left. To register one brain with another orientation, use
-`cfos-mapper register O15 --orientation sar` or the orientation box of widget 4 in napari. The
-widget shows the orientation each brain was registered with, and writes it on the canvas with
-the atlas layers.
+`cfos-mapper register O15 --orientation sar` or the orientation box of widget 4 in napari
+(hover over it for what the letters mean). *Show the brain* there shows the brain with its axes
+and writes on the canvas what the letters in the box mean for it, so you can pick them by eye.
+The widget also shows the orientation each brain was registered with, and writes it on the canvas
+with the atlas layers.
 
 Registration cannot check the last letter. The brain is nearly mirror-symmetric, so a mirrored
 image registers just as well. A wrong `l`/`r` only swaps the *left* and *right* columns of the

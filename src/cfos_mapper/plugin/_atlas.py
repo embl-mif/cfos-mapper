@@ -3,6 +3,8 @@ Widget 4 - atlas regions: register a brain to the atlas (brainreg), check the
 registration on the brain, count the cells of a whole-brain run per region and
 see the cell density of every region.
 
+  0. "Show the brain"           the brain with its z, y, x axes, and what the orientation in
+                                the box means for it (written on the canvas, follows the box)
   1. "Register this brain"      brainreg in a separate process (~30-60 min), with the image
                                 orientation of the box (settings atlas.orientation by default)
   2. "Show atlas on the brain"  atlas regions over the brain (hover: region name in the status bar)
@@ -24,6 +26,20 @@ import cfos_mapper as cf
 
 from . import _common as common
 
+ORIENTATION_HELP = (
+    "<b>Image orientation</b>: three letters, one for each image axis z, y, x (axes 0, 1, 2 of the "
+    "OME-Zarr), saying where in the animal that axis <i>starts</i> (at index 0):<br><br>"
+    "<b>s / i</b> &nbsp; superior (dorsal, top of the head) / inferior (ventral, the belly side)<br>"
+    "<b>a / p</b> &nbsp; anterior (the nose, olfactory bulbs) / posterior (cerebellum, spinal cord)<br>"
+    "<b>l / r</b> &nbsp; the animal's left / right (not yours, as you look at the image)<br><br>"
+    "Each pair is used once. Example: <b>sal</b> = the first plane (z = 0) is dorsal, y runs from the "
+    "nose backwards, x from the animal's left to its right.<br><br>"
+    "Press <i>Show the brain</i>: in napari's default view the slider moves along z, y goes down "
+    "the image and x goes to the right. The axes arrows show this too.<br><br>"
+    "Registration cannot check l / r (the brain is nearly symmetric): a wrong letter only swaps the "
+    "left and right columns. Check it once with a mark you know, e.g. an injection, a lesion or a cut."
+)
+
 
 class AtlasWidget(QWidget):
     def __init__(self, napari_viewer):
@@ -32,16 +48,22 @@ class AtlasWidget(QWidget):
         self.settings = common.load_settings()
         self.jobs = []
         self.my_layers = []
+        self.preview_brain = None  # brain shown with "Show the brain": the canvas follows the box
 
         self.brain_box = QComboBox()
         self.brain_box.addItems(common.brain_names(self.settings))
         self.brain_box.currentTextChanged.connect(self.update_state)
         self.state = QLabel("")
         self.state.setWordWrap(True)
+        show_brain_button = QPushButton("Show the brain (to decide the orientation)")
+        show_brain_button.clicked.connect(self.show_brain)
+        orientation_label = QLabel("image orientation (where z, y, x start: s/i, a/p, l/r)  ⓘ")
         self.orientation_edit = QLineEdit(self.settings["atlas"]["orientation"])
         self.orientation_edit.textChanged.connect(self.update_orientation_text)
         self.orientation_text = QLabel("")
         self.orientation_text.setWordWrap(True)
+        for w in [orientation_label, self.orientation_edit, self.orientation_text]:
+            w.setToolTip(ORIENTATION_HELP)
         self.register_button = QPushButton("Register this brain")
         self.register_button.clicked.connect(self.register)
         show_atlas_button = QPushButton("Show atlas on the brain")
@@ -58,8 +80,7 @@ class AtlasWidget(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self._group("1. Brain", [
-            self.brain_box, self.state,
-            QLabel("image orientation (where z, y, x start: s/i, a/p, l/r)"), self.orientation_edit,
+            self.brain_box, self.state, show_brain_button, orientation_label, self.orientation_edit,
             self.orientation_text, self.register_button]))
         layout.addWidget(self._group("2. Check the registration", [show_atlas_button]))
         layout.addWidget(self._group("3. Cells per region", [QLabel("whole-brain run"), self.run_box,
@@ -112,15 +133,50 @@ class AtlasWidget(QWidget):
             self.orientation_text.setText(cf.describe_orientation(self.orientation_edit.text()))
         except ValueError as e:
             self.orientation_text.setText(f"NOT VALID: {e}")
+        if self.preview_brain is not None and self.preview_brain == self.brain:
+            self.preview_orientation()
 
-    def show_orientation(self, brain):
-        """Write on the canvas how the brain was registered."""
-        orientation = cf.registered_orientation(brain, self.settings)
-        self.viewer.text_overlay.text = (f"{brain}: registered with orientation '{orientation}'\n"
-                                         f"{cf.describe_orientation(orientation)}")
+    def write_on_canvas(self, text):
+        self.viewer.text_overlay.text = text
         self.viewer.text_overlay.position = "top_left"
         self.viewer.text_overlay.font_size = 14
         self.viewer.text_overlay.visible = True
+
+    def show_orientation(self, brain):
+        """Write on the canvas how the brain was registered."""
+        self.preview_brain = None
+        orientation = cf.registered_orientation(brain, self.settings)
+        self.write_on_canvas(f"{brain}: registered with orientation '{orientation}'\n"
+                             f"{cf.describe_orientation(orientation)}")
+
+    def show_brain(self):
+        """The brain with its axes, to decide the orientation; the canvas says what the box means."""
+        brain = self.brain
+        common.add_brain_layers(self.viewer, brain, self.settings)
+        if self.viewer.dims.ndim == 3:
+            self.viewer.dims.axis_labels = ("z", "y", "x")
+        self.viewer.axes.visible = True
+        self.viewer.axes.labels = True
+        self.viewer.axes.arrows = True
+        self.preview_brain = brain
+        self.preview_orientation()
+        self.say(f"{brain} shown. Move the z slider and look at the top and left of the image, then type the "
+                 f"letters that fit in the orientation box (hover over it for help); the text on the canvas "
+                 f"follows the box.")
+
+    def preview_orientation(self):
+        """Write on the canvas what the orientation in the box means for the shown brain."""
+        orientation = self.orientation_edit.text().strip().lower()
+        try:
+            z, y, x = cf.orientation_words(orientation)
+        except ValueError:
+            self.write_on_canvas(f"{self.preview_brain}: orientation '{orientation}' is not valid "
+                                 f"(one of s/i, a/p, l/r each)")
+            return
+        self.write_on_canvas(f"{self.preview_brain} with orientation '{orientation}' (the box), axes start at:\n"
+                             f"z = 0 (first plane, slider at the start): {z}\n"
+                             f"y = 0 (top of the image): {y}\n"
+                             f"x = 0 (left of the image): {x}")
 
     # ------------------------------------------------------------------
     def register(self):

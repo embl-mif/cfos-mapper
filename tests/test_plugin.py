@@ -74,3 +74,19 @@ def test_atlas_widget_registers_with_the_orientation_of_the_box(viewer, qtbot, p
     assert "the animal's right" in widget.orientation_text.text()
     widget.register()
     assert started == [["register", "B1", "--orientation", "sar"]]
+
+
+def test_atlas_widget_show_brain_follows_the_orientation_box(viewer, qtbot, project):
+    from cfos_mapper.plugin import _atlas
+
+    widget = _atlas.AtlasWidget(viewer)
+    qtbot.addWidget(widget)
+    widget.brain_box.setCurrentText("B1")
+    assert "s / i" in widget.orientation_edit.toolTip()
+    widget.show_brain()
+    assert "B1: cFos" in viewer.layers and viewer.axes.visible
+    widget.orientation_edit.setText("pir")
+    text = viewer.text_overlay.text
+    assert "'pir'" in text and "posterior" in text and "the animal's right" in text
+    widget.orientation_edit.setText("pi")
+    assert "not valid" in viewer.text_overlay.text

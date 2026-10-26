@@ -85,10 +85,10 @@ def registration_folder(brain_name, settings):
     return Path(settings["results_folder"]) / brain_name / "registration"
 
 
-def describe_orientation(orientation):
+def orientation_words(orientation):
     """
-    A brainglobe orientation in words: "sal" -> "z from superior, y from anterior,
-    x from the animal's left". ValueError if it is not one letter of s/i, a/p, l/r each.
+    Where axes z, y, x start, in words: "sal" -> ["superior", "anterior", "the animal's left"].
+    ValueError if it is not one letter of s/i, a/p, l/r each.
     """
     words = {"s": "superior", "i": "inferior", "a": "anterior", "p": "posterior",
              "l": "the animal's left", "r": "the animal's right"}
@@ -97,7 +97,12 @@ def describe_orientation(orientation):
     if len(letters) != 3 or sorted(pairs) != [0, 1, 2]:
         raise ValueError(f"orientation '{orientation}' is not valid: three letters, one of s/i, a/p and l/r "
                          f"each, for where axes z, y, x start (e.g. sal)")
-    return ", ".join(f"{axis} from {words[c]}" for axis, c in zip("zyx", letters))
+    return [words[c] for c in letters]
+
+
+def describe_orientation(orientation):
+    """A brainglobe orientation in words: "sal" -> "z from superior, y from anterior, x from the animal's left"."""
+    return ", ".join(f"{axis} from {word}" for axis, word in zip("zyx", orientation_words(orientation)))
 
 
 def registered_orientation(brain_name, settings):

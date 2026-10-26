@@ -101,6 +101,7 @@ def test_count_and_summary(project, registered, monkeypatch):
 
 
 def test_describe_orientation():
+    assert cf.orientation_words("ial") == ["inferior", "anterior", "the animal's left"]
     assert cf.describe_orientation("sal") == "z from superior, y from anterior, x from the animal's left"
     assert cf.describe_orientation(" PIR ").startswith("z from posterior, y from inferior")
     for wrong in ["sa", "ssl", "sax", "salp", ""]:

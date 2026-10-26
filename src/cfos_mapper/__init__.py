@@ -22,6 +22,7 @@ from .atlas import (  # noqa: E402
     count_cells_per_region,
     describe_orientation,
     load_atlas,
+    orientation_words,
     per_region_table,
     region_volumes,
     register_brain,
