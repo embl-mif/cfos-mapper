@@ -1,0 +1,25 @@
+name: cfos-mapper
+display_name: cFos mapper
+contributions:
+  commands:
+    - id: cfos-mapper.regions
+      python_name: cfos_mapper.plugin:RegionsWidget
+      title: 1. Training regions
+    - id: cfos-mapper.annotate
+      python_name: cfos_mapper.plugin:AnnotationWidget
+      title: 2. Annotate and train
+    - id: cfos-mapper.results
+      python_name: cfos_mapper.plugin:ResultsWidget
+      title: 3. Whole-brain results
+    - id: cfos-mapper.atlas
+      python_name: cfos_mapper.plugin:AtlasWidget
+      title: 4. Atlas regions
+  widgets:
+    - command: cfos-mapper.regions
+      display_name: 1. Training regions
+    - command: cfos-mapper.annotate
+      display_name: 2. Annotate and train
+    - command: cfos-mapper.results
+      display_name: 3. Whole-brain results
+    - command: cfos-mapper.atlas
+      display_name: 4. Atlas regions

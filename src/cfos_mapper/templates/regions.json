@@ -1,0 +1,6 @@
+{
+    "_comment": "Test regions (start, end) in full-resolution voxels (z, y, x), per brain. Draw them in napari (widget 1) or write them here.",
+    "BRAIN1": {
+        "regionA_cortex": {"z": [850, 1150], "y": [4300, 4780], "x": [700, 1180]}
+    }
+}

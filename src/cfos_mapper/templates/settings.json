@@ -1,0 +1,45 @@
+{
+    "_comment": "cfos-mapper settings. Folders: where the brains (OME-Zarr, one per brain: <name>.ome.zarr) are, and where results go. Networks, reports, logs and atlases go next to the results folder unless given here (networks_folder, reports_folder, logs_folder, atlas.folder).",
+    "brains_folder": "/path/to/zarr_datasets",
+    "results_folder": "/path/to/project/results",
+
+    "_channels": "part of the channel names in the OME-Zarr files",
+    "signal_channel": "cFos",
+    "background_channel": "auto",
+
+    "_brightness_reference": "every brain is scaled so that its median tissue brightness becomes these values (only for our own networks)",
+    "brightness_reference": {"signal": 400, "background": 700},
+
+    "find_candidates": {
+        "soma_diameter": 10,
+        "ball_xy_size": 6,
+        "ball_z_size": 15,
+        "ball_overlap_fraction": 0.6,
+        "soma_spread_factor": 1.4,
+        "log_sigma_size": 0.2,
+        "n_sds_above_mean_thresh": 3,
+        "max_cluster_size": 100000,
+        "n_free_cpus": 8,
+        "batch_size": 1
+    },
+
+    "_full_brain": "extra settings for finding candidates in a WHOLE brain: a local threshold on tiles of ~480 px (70 x soma diameter), the size of the test regions",
+    "full_brain": {
+        "tiled_thresh_tile_size": 70,
+        "n_sds_above_mean_tiled_thresh": 3
+    },
+
+    "classify": {
+        "model": "pretrained",
+        "network_voxel_size": [5, 1, 1],
+        "cube_size": [20, 50, 50],
+        "batch_size": 64
+    },
+
+    "_atlas": "registration with brainreg. orientation: brainglobe letters for where image axes 0, 1, 2 start (s/i = superior/inferior, a/p = anterior/posterior, l/r = left/right)",
+    "atlas": {
+        "name": "allen_mouse_25um",
+        "orientation": "sal",
+        "n_free_cpus": 8
+    }
+}

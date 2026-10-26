@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=69", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cfos-mapper"
+dynamic = ["version"]   # taken from the git tag (v0.1.0 -> 0.1.0) by setuptools-scm
+description = "Find cFos+ cells in whole cleared mouse brains (cellfinder) and count them per atlas region (brainreg)"
+readme = "README.md"
+license = "BSD-3-Clause"
+authors = [{ name = "Nicola Gritti", email = "nicola.gritti@embl.es" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Framework :: napari",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    # image input / output (OME-Zarr)
+    "pymif @ git+https://github.com/grinic/pymif.git@v0.5.1",
+    # cell detection + classification
+    "cellfinder==1.11.*",
+    # torch 2.10+ has no kernels for the V100 GPUs (sm_70); 2.9 PyPI wheels include CUDA 12.8
+    "torch>=2.5,<2.10",
+    "keras>=3.0",
+    # atlas registration + regions
+    "brainreg>=1.0.17,<2",
+    "brainglobe-atlasapi>=2.0",
+    "brainglobe-space>=1.0",
+    "brainglobe-utils>=0.11",
+    # everyday tools
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-image",
+    "tifffile",
+    "pyyaml",
+    "matplotlib",
+    "tqdm",
+    "dask",
+]
+
+[project.optional-dependencies]
+# The plain install (`pip install .`) has no GUI: Python API + `cfos-mapper` command line.
+# That is what the Docker image (HPC cluster) contains; `.[hpc]` is the same, for clarity.
+hpc = []
+# + the napari plugin (GUI)
+napari = ["napari[pyqt6]>=0.5", "npe2"]
+figures = ["imageio[ffmpeg]", "nbformat", "jupyter"]
+dev = ["pytest>=8", "pytest-qt", "pytest-cov", "ruff", "napari[pyqt6]>=0.5", "npe2"]
+
+[project.scripts]
+cfos-mapper = "cfos_mapper.cli:main"
+
+[project.entry-points."napari.manifest"]
+cfos-mapper = "cfos_mapper.plugin:napari.yaml"
+
+[project.urls]
+Source = "https://github.com/grinic/cfos-mapper"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"cfos_mapper.plugin" = ["napari.yaml"]
+"cfos_mapper" = ["templates/*.json"]
+
+[tool.setuptools_scm]
+version_file = "src/cfos_mapper/_version.py"
+fallback_version = "0.0.0"   # used when building outside a git checkout without a tag
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "gpu: needs a GPU (skipped automatically when there is none)",
+    "slow: downloads an atlas or runs a registration (run with: pytest -m slow)",
+]
+addopts = "-m 'not slow'"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
