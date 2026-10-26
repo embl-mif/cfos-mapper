@@ -79,6 +79,7 @@ def parser():
     s = steps.add_parser("summary", help="cells per region of all brains in one table")
     s.add_argument("--network", required=True)
     s.add_argument("--brains", nargs="*", help="only these brains")
+    s.add_argument("--run", help="run folder name if not the network name (e.g. network_v3_planes900-1000)")
     return p
 
 
@@ -146,8 +147,9 @@ def main(argv=None):
     elif args.step == "count":
         cf.count_cells_per_region(args.brain, args.network, settings, run=args.run)
     elif args.step == "summary":
-        table = cf.summary_table(args.network, settings, brains=args.brains)
-        print(f"{len(table)} regions -> {settings['reports_folder']}/{args.network}/cells_per_region_all_brains.csv")
+        table = cf.summary_table(args.network, settings, brains=args.brains, run=args.run)
+        print(f"{len(table)} regions -> {settings['reports_folder']}/{args.run or args.network}/"
+              f"cells_per_region_all_brains.csv")
     print("done", flush=True)
     return 0
 

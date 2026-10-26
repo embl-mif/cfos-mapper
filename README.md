@@ -147,6 +147,7 @@ Jupyter notebooks in [`examples/`](examples):
 | [`01_command_line.ipynb`](examples/01_command_line.ipynb) | a whole analysis with `cfos-mapper` commands, and on an HPC cluster with the container |
 | [`02_python_api.ipynb`](examples/02_python_api.ipynb) | the same steps as Python functions, with plots |
 | [`03_napari_plugin.ipynb`](examples/03_napari_plugin.ipynb) | opening the plugin, a guided tour of the four widgets |
+| [`run_all_brains.py`](examples/run_all_brains.py) | the whole analysis of every brain of a project on one workstation (run-brain → register → count, then summary), skipping what is done |
 | [`figures/`](examples/figures) | the figure notebooks of our analysis (results, method, pretrained network test) |
 
 ## Atlas and left / right
