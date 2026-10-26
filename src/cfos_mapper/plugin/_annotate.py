@@ -38,6 +38,7 @@ from qtpy.QtWidgets import (
 from scipy.spatial import cKDTree
 
 import cfos_mapper as cf
+from cfos_mapper.gpu import gpu_count
 
 from . import _common as common
 
@@ -94,7 +95,7 @@ The statistics under the button tell you how good the network is on this region;
 (<code>results/&lt;brain&gt;/test_regions/&lt;region&gt;_annotations.csv</code>). Save often.
 Next time your annotations are loaded again, so you can continue over several days.</p>
 
-<p><b>4. Train</b> - type a name for the new network (e.g. network_v3), choose epochs (150) and GPU (0 or 1),
+<p><b>4. Train</b> - type a name for the new network (e.g. network_v3), choose epochs (150) and GPU (0, 1, ...),
 press <i>Train new network</i>. It uses the saved annotations of all regions, keeps 20% aside
 for testing, and runs in the background (30-60 min); you can keep annotating or close the window.
 When it is finished it appears in the network list.</p>
@@ -160,9 +161,14 @@ class AnnotationWidget(QWidget):
         self.epochs_box = QSpinBox()
         self.epochs_box.setRange(5, 1000)
         self.epochs_box.setValue(150)
+        # GPUs of this machine; the last of the first two by default (GPU 0 is often busy with run-brain)
+        gpus = gpu_count()
         self.gpu_box = QSpinBox()
-        self.gpu_box.setRange(0, 1)
-        self.gpu_box.setValue(1)
+        self.gpu_box.setRange(0, max(gpus - 1, 0))
+        self.gpu_box.setValue(min(1, max(gpus - 1, 0)))
+        if gpus == 0:
+            self.gpu_box.setEnabled(False)
+            self.gpu_box.setToolTip("no NVIDIA GPU found: training runs on the CPU (many times slower)")
         self.train_button = QPushButton("Train new network")
         self.train_button.clicked.connect(self.train)
         self.status = QLabel("Choose a region and press 'Load region'.")
@@ -576,13 +582,15 @@ class AnnotationWidget(QWidget):
                                     YES | NO) == YES:
                 self.save()
         log = common.log_file(f"train_{name}")
-        command = common.command("train", name, "--gpu", self.gpu_box.value(), "--epochs", self.epochs_box.value())
+        gpu = ["--gpu", self.gpu_box.value()] if self.gpu_box.isEnabled() else []
+        command = common.command("train", name, *gpu, "--epochs", self.epochs_box.value())
         process = subprocess.Popen(command, stdout=open(log, "w"), stderr=subprocess.STDOUT,
                                    start_new_session=True)  # keeps running if this window is closed
         self.training = (process, name, log)
         self.train_button.setEnabled(False)
+        device = f"GPU {self.gpu_box.value()}" if gpu else "no GPU found: on the CPU, slow"
         self.say(f"Training '{name}' started in the background ({self.epochs_box.value()} epochs, "
-                 f"GPU {self.gpu_box.value()}). You can keep annotating. Log: {log}")
+                 f"{device}). You can keep annotating. Log: {log}")
 
     def check_training(self):
         if self.training is None:

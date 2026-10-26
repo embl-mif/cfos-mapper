@@ -101,11 +101,12 @@ def main(argv=None):
               f"--settings {args.folder}/settings.json")
         return 0
 
-    # GPU steps: choose the GPU and load cuDNN before torch does
-    from .gpu import load_gpu_libraries, use_gpu
+    # GPU steps: choose the GPU and load cuDNN before torch does, then check torch can use it
+    from .gpu import check_gpu, load_gpu_libraries, use_gpu
     use_gpu(getattr(args, "gpu", None))
     if args.step in ("prepare", "prepare-all", "predict", "predict-all", "train", "run-brain"):
         load_gpu_libraries()
+        check_gpu(getattr(args, "gpu", None))
 
     import cfos_mapper as cf
 
