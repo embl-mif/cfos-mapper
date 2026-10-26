@@ -20,10 +20,12 @@ import pymif.microscope_manager as mm  # noqa: E402
 from .atlas import (  # noqa: E402
     cells_to_atlas,
     count_cells_per_region,
+    describe_orientation,
     load_atlas,
     per_region_table,
     region_volumes,
     register_brain,
+    registered_orientation,
     registration_folder,
     registration_ready,
     summary_table,

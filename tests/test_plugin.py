@@ -53,3 +53,24 @@ def test_background_job_command_uses_the_settings(project, monkeypatch):
     monkeypatch.setenv("CFOS_MAPPER_SETTINGS", project["settings_file"])
     command = _common.command("prepare", "B1", "regionA")
     assert command[1:3] == ["-m", "cfos_mapper"] and project["settings_file"] in command
+
+
+def test_atlas_widget_registers_with_the_orientation_of_the_box(viewer, qtbot, project, monkeypatch):
+    from cfos_mapper.plugin import _atlas, _common
+
+    started = []
+    monkeypatch.setattr(_common, "BackgroundJob", lambda args, done, **kw: started.append(args))
+    widget = _atlas.AtlasWidget(viewer)
+    qtbot.addWidget(widget)
+    widget.brain_box.setCurrentText("B1")
+    assert widget.orientation_edit.text() == project["atlas"]["orientation"]
+
+    widget.orientation_edit.setText("xyz")
+    assert "NOT VALID" in widget.orientation_text.text()
+    widget.register()
+    assert started == []
+
+    widget.orientation_edit.setText("SAR")
+    assert "the animal's right" in widget.orientation_text.text()
+    widget.register()
+    assert started == [["register", "B1", "--orientation", "sar"]]

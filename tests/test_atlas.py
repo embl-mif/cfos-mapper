@@ -98,3 +98,16 @@ def test_count_and_summary(project, registered, monkeypatch):
     assert table.set_index("acronym").loc["root", "cells"] == 2
     wide = cf.summary_table("net", project)
     assert "B1 cells_per_mm3" in wide.columns
+
+
+def test_describe_orientation():
+    assert cf.describe_orientation("sal") == "z from superior, y from anterior, x from the animal's left"
+    assert cf.describe_orientation(" PIR ").startswith("z from posterior, y from inferior")
+    for wrong in ["sa", "ssl", "sax", "salp", ""]:
+        with pytest.raises(ValueError):
+            cf.describe_orientation(wrong)
+
+
+def test_registered_orientation(project, registered):
+    assert cf.registered_orientation("B1", project) == "asr"
+    assert cf.registered_orientation("B2", project) is None

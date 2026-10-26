@@ -3,10 +3,14 @@ Widget 4 - atlas regions: register a brain to the atlas (brainreg), check the
 registration on the brain, count the cells of a whole-brain run per region and
 see the cell density of every region.
 
-  1. "Register this brain"      brainreg in a separate process (~30-60 min)
+  1. "Register this brain"      brainreg in a separate process (~30-60 min), with the image
+                                orientation of the box (settings atlas.orientation by default)
   2. "Show atlas on the brain"  atlas regions over the brain (hover: region name in the status bar)
   3. "Count cells per region"   for the chosen whole-brain run (separate process)
   4. "Show density per region"  every region coloured by its cells per mm^3
+
+The orientation a brain was registered with is written on the canvas with
+its atlas layers.
 """
 
 import json
@@ -14,7 +18,7 @@ import json
 import numpy as np
 import pandas as pd
 from napari.qt.threading import thread_worker
-from qtpy.QtWidgets import QComboBox, QGroupBox, QLabel, QPushButton, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QComboBox, QGroupBox, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 import cfos_mapper as cf
 
@@ -34,6 +38,10 @@ class AtlasWidget(QWidget):
         self.brain_box.currentTextChanged.connect(self.update_state)
         self.state = QLabel("")
         self.state.setWordWrap(True)
+        self.orientation_edit = QLineEdit(self.settings["atlas"]["orientation"])
+        self.orientation_edit.textChanged.connect(self.update_orientation_text)
+        self.orientation_text = QLabel("")
+        self.orientation_text.setWordWrap(True)
         self.register_button = QPushButton("Register this brain")
         self.register_button.clicked.connect(self.register)
         show_atlas_button = QPushButton("Show atlas on the brain")
@@ -49,12 +57,15 @@ class AtlasWidget(QWidget):
         self.status.setWordWrap(True)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self._group("1. Brain", [self.brain_box, self.state, self.register_button]))
+        layout.addWidget(self._group("1. Brain", [
+            self.brain_box, self.state,
+            QLabel("image orientation (where z, y, x start: s/i, a/p, l/r)"), self.orientation_edit,
+            self.orientation_text, self.register_button]))
         layout.addWidget(self._group("2. Check the registration", [show_atlas_button]))
         layout.addWidget(self._group("3. Cells per region", [QLabel("whole-brain run"), self.run_box,
                                                              count_button, show_density_button, self.top]))
         layout.addWidget(self._group("Messages", [self.status]))
-        layout.addWidget(QLabel(f"Atlas: {self.settings['atlas']['name']}, image orientation "
+        layout.addWidget(QLabel(f"Atlas: {self.settings['atlas']['name']}, default image orientation "
                                 f"'{self.settings['atlas']['orientation']}' (settings.json, atlas)."))
         layout.addStretch()
         self.update_state()
@@ -87,17 +98,42 @@ class AtlasWidget(QWidget):
         if not self.brain:
             return
         registered = cf.registration_ready(self.brain, self.settings)
-        self.state.setText("registered" if registered else "not registered yet")
+        orientation = cf.registered_orientation(self.brain, self.settings) if registered else None
+        self.state.setText(f"registered with orientation '{orientation}'" if registered else "not registered yet")
         self.register_button.setText("Register again" if registered else "Register this brain")
+        # the box starts at the orientation of this brain's registration, or the settings
+        self.orientation_edit.setText(orientation or self.settings["atlas"]["orientation"])
+        self.update_orientation_text()
         self.run_box.clear()
         self.run_box.addItems(self.runs())
+
+    def update_orientation_text(self):
+        try:
+            self.orientation_text.setText(cf.describe_orientation(self.orientation_edit.text()))
+        except ValueError as e:
+            self.orientation_text.setText(f"NOT VALID: {e}")
+
+    def show_orientation(self, brain):
+        """Write on the canvas how the brain was registered."""
+        orientation = cf.registered_orientation(brain, self.settings)
+        self.viewer.text_overlay.text = (f"{brain}: registered with orientation '{orientation}'\n"
+                                         f"{cf.describe_orientation(orientation)}")
+        self.viewer.text_overlay.position = "top_left"
+        self.viewer.text_overlay.font_size = 14
+        self.viewer.text_overlay.visible = True
 
     # ------------------------------------------------------------------
     def register(self):
         brain = self.brain
+        orientation = self.orientation_edit.text().strip().lower()
+        try:
+            words = cf.describe_orientation(orientation)
+        except ValueError as e:
+            self.say(str(e))
+            return
         self.register_button.setEnabled(False)
-        self.say(f"registering {brain} with brainreg in a separate process (~30-60 min). "
-                 f"You can keep working; the log is in the logs folder.")
+        self.say(f"registering {brain} with orientation '{orientation}' ({words}) with brainreg in a separate "
+                 f"process (~30-60 min). You can keep working; the log is in the logs folder.")
 
         def done(ok, log):
             self.register_button.setEnabled(True)
@@ -105,7 +141,7 @@ class AtlasWidget(QWidget):
             self.say(f"{brain} registered: press 'Show atlas on the brain' to check it." if ok
                      else f"Registering {brain} FAILED, see {log}")
 
-        self.jobs.append(common.BackgroundJob(["register", brain], done, tries=1))
+        self.jobs.append(common.BackgroundJob(["register", brain, "--orientation", orientation], done, tries=1))
 
     def show_atlas(self):
         brain = self.brain
@@ -137,6 +173,7 @@ class AtlasWidget(QWidget):
                                            features=features)
             layer.contour = 1
             self.my_layers.append(name)
+            self.show_orientation(brain)
             self.say(f"{brain}: atlas regions shown (outlines). Hover over the brain to see the region name "
                      f"in the status bar. Do the outlines follow the brain?")
 
@@ -207,6 +244,7 @@ class AtlasWidget(QWidget):
                                   blending="additive", opacity=0.7,
                                   contrast_limits=[0, float(np.percentile(image[image > 0], 99))])
             self.show_top(run)
+            self.show_orientation(brain)
             self.say(f"{brain} {run}: each region coloured by its cells per mm³.")
 
         worker = work()

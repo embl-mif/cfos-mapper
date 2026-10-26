@@ -85,6 +85,27 @@ def registration_folder(brain_name, settings):
     return Path(settings["results_folder"]) / brain_name / "registration"
 
 
+def describe_orientation(orientation):
+    """
+    A brainglobe orientation in words: "sal" -> "z from superior, y from anterior,
+    x from the animal's left". ValueError if it is not one letter of s/i, a/p, l/r each.
+    """
+    words = {"s": "superior", "i": "inferior", "a": "anterior", "p": "posterior",
+             "l": "the animal's left", "r": "the animal's right"}
+    letters = orientation.strip().lower()
+    pairs = [next((k for k, pair in enumerate(["si", "ap", "lr"]) if c in pair), -1) for c in letters]
+    if len(letters) != 3 or sorted(pairs) != [0, 1, 2]:
+        raise ValueError(f"orientation '{orientation}' is not valid: three letters, one of s/i, a/p and l/r "
+                         f"each, for where axes z, y, x start (e.g. sal)")
+    return ", ".join(f"{axis} from {words[c]}" for axis, c in zip("zyx", letters))
+
+
+def registered_orientation(brain_name, settings):
+    """The orientation a brain was registered with (None if it was never registered)."""
+    info_file = registration_folder(brain_name, settings) / "input" / "input_info.json"
+    return json.load(open(info_file))["orientation"] if info_file.exists() else None
+
+
 def registration_ready(brain_name, settings):
     folder = registration_folder(brain_name, settings)
     return all((folder / f).exists() for f in
@@ -106,6 +127,7 @@ def register_brain(brain_name, settings, extra_brainreg_args=()):
     """
     import tifffile
 
+    describe_orientation(settings["atlas"]["orientation"])  # a wrong orientation fails here, not in brainreg
     atlas_name = settings["atlas"]["name"]
     atlas_um = float(atlas_name.rsplit("_", 1)[-1].replace("um", ""))
     out = registration_folder(brain_name, settings)
