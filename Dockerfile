@@ -10,6 +10,8 @@ RUN apt-get update \
 
 # the version normally comes from the git tag, but .git is not copied in: CI passes it here
 ARG VERSION=0.0.0
+# torch + CUDA wheels are large: give slow downloads time instead of failing
+ARG PIP_DEFAULT_TIMEOUT=300
 
 COPY . /src
 RUN SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION} pip install --no-cache-dir /src \
