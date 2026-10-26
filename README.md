@@ -15,7 +15,7 @@ every step simple:
 | 5. registration | the brain is matched to the atlas (autofluorescence channel) | brainreg |
 | 6. regions | every cell gets its atlas region → cells and cells/mm³ per region, all brains in one table | brainglobe |
 
-Images are read and written as OME-Zarr with [pymif](https://github.com/grinic/pymif).
+Images are read and written as OME-Zarr with [pymif](https://github.com/embl-mif/pymif).
 
 You can use it in three ways, all doing exactly the same:
 
@@ -30,10 +30,10 @@ You need Python ≥ 3.11 and, for training and whole brains, an NVIDIA GPU.
 
 ```bash
 # with the napari plugin (desktop / workstation)
-pip install "cfos-mapper[napari] @ git+https://github.com/grinic/cfos-mapper.git"
+pip install "cfos-mapper[napari] @ git+https://github.com/embl-mif/cfos-mapper.git"
 
 # without any GUI: Python API + command line only (servers, HPC, Docker)
-pip install "cfos-mapper @ git+https://github.com/grinic/cfos-mapper.git"
+pip install "cfos-mapper @ git+https://github.com/embl-mif/cfos-mapper.git"
 ```
 
 From a local copy: `pip install ".[napari]"` or `pip install .` (or `pip install ".[hpc]"`, the same).
@@ -168,23 +168,24 @@ brain.
 ## Docker / HPC
 
 Every version tag builds a Docker image with the GPU-ready, no-GUI install
-(`ghcr.io/grinic/cfos-mapper:<version>`, and `:main` for the latest commit). On a cluster with
+(`ghcr.io/embl-mif/cfos-mapper:<version>`, `:latest` for the newest version and `:main` for the
+latest commit). On a cluster with
 Apptainer / Singularity:
 
 ```bash
-apptainer pull cfos-mapper.sif docker://ghcr.io/grinic/cfos-mapper:0.1.0
+apptainer pull cfos-mapper.sif docker://ghcr.io/embl-mif/cfos-mapper:0.1.0
 apptainer exec --nv --bind /path/to/data cfos-mapper.sif \
     cfos-mapper --settings /path/to/data/settings.json run-brain O15 --network network_v3
 ```
 
 `--nv` gives the container the GPU, and `--bind` the data folder. Locally:
-`docker run --gpus all -v /data:/data ghcr.io/grinic/cfos-mapper:0.1.0 --settings /data/settings.json register O15`.
+`docker run --gpus all -v /data:/data ghcr.io/embl-mif/cfos-mapper:0.1.0 --settings /data/settings.json register O15`.
 
 ## Versions
 
 The version comes from git tags (setuptools-scm): tag a commit `v0.2.0` and push the tag. GitHub
 Actions then runs the tests, builds the package, makes a GitHub release and pushes the Docker image
-`ghcr.io/grinic/cfos-mapper:0.2.0`. Commits between tags get versions like `0.2.1.dev3+g1a2b3c4`.
+`ghcr.io/embl-mif/cfos-mapper:0.2.0`. Commits between tags get versions like `0.2.1.dev3+g1a2b3c4`.
 
 ## License
 
