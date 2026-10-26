@@ -1,6 +1,5 @@
-# Every push / pull request: tests.
-# Push to main: + Docker image ghcr.io/<owner>/cfos-mapper:main
-# Tag v0.2.0:   + package, GitHub release, Docker images :0.2.0, :0.2 and :latest
+# Push to main / pull request: tests only.
+# Tag v0.2.0: tests, package, GitHub release, Docker images ghcr.io/<owner>/cfos-mapper:0.2.0, :0.2, :latest
 name: release
 
 on:
@@ -61,7 +60,7 @@ jobs:
           generate_release_notes: true
 
   docker:
-    if: github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: test
     runs-on: ubuntu-latest
     permissions:
@@ -88,7 +87,6 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=branch
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:

@@ -168,8 +168,7 @@ brain.
 ## Docker / HPC
 
 Every version tag builds a Docker image with the GPU-ready, no-GUI install
-(`ghcr.io/embl-mif/cfos-mapper:<version>`, `:latest` for the newest version and `:main` for the
-latest commit). On a cluster with
+(`ghcr.io/embl-mif/cfos-mapper:<version>`, and `:latest` for the newest version). On a cluster with
 Apptainer / Singularity:
 
 ```bash
