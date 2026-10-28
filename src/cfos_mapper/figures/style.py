@@ -6,6 +6,8 @@ Colours come from a colour-blind-safe palette:
   - OURS / PRETRAINED    blue / gray
   - BRAINS               fixed colour per brain (never reassigned)
   - BLUE_RAMP            one-hue colormap for amounts (e.g. cells per volume)
+  - ORANGE_RAMP          the same in orange (atlas maps of cells per mm³)
+  - BLUE_ORANGE          diverging colormap: more in one group (blue) or the other (orange)
 Text stays in neutral inks; colour is only used for data.
 """
 
@@ -33,6 +35,13 @@ BRAIN_COLORS = [BLUE, ORANGE, AQUA, YELLOW]  # O15, O16, O17, O18 ... in this fi
 
 BLUE_RAMP = LinearSegmentedColormap.from_list(
     "blue_ramp", [SURFACE, "#cde2fb", "#86b6ef", "#3987e5", "#256abf", "#184f95", "#0d366b"])
+# the second amount next to BLUE_RAMP (e.g. cells per mm³ on atlas maps): one hue, light -> dark.
+# Starts at a pale tint, not white: on atlas maps white is tissue without a value (fiber tracts, ventricles)
+ORANGE_RAMP = LinearSegmentedColormap.from_list(
+    "orange_ramp", ["#fdefe7", "#fbd3bf", "#f5a986", "#eb6834", "#c44a1b", "#8a3111", "#4a1a08"])
+# more in one group (blue end) or the other (orange end), gray = the same
+BLUE_ORANGE = LinearSegmentedColormap.from_list(
+    "blue_orange", ["#184f95", "#3987e5", "#9ec5f4", "#e6e5df", "#f5b496", "#eb6834", "#a3390f"])
 
 
 def brain_color(brain, all_brains):
