@@ -3,6 +3,13 @@
 Find cFos+ cells in whole cleared mouse brains imaged with a light-sheet
 microscope, and count them in every region of the Allen mouse brain atlas.
 
+<p align="center">
+  <img src="docs/images/fly_through_2D_3D.gif" width="720"
+       alt="Flying from front to back through a whole brain: coronal section with the detected cells, and the 3D brain">
+  <br><sub>From front to back through a whole brain: the coronal section with its detected cells (orange, left)
+  and where it lies in the 3D brain (right).</sub>
+</p>
+
 It puts together three [BrainGlobe](https://brainglobe.info) tools and keeps
 every step simple:
 
@@ -23,6 +30,37 @@ You can use it in three ways, all doing exactly the same:
   whole-brain results, and the atlas regions
 - **command line**: `cfos-mapper <step>`, also in a Docker container on an HPC cluster
 - **Python**: `import cfos_mapper as cf`, plain functions on one brain at a time
+
+## What it looks like
+
+**A whole brain.** One cleared brain in 3D: the cFos signal (gray), the cell density (blue) and a sample of
+its 2.4 million detected cells (orange).
+
+![A whole brain in 3D with its detected cells](docs/images/brain_3d.png)
+
+**Test regions.** A few small boxes per brain, in different parts of the brain, where candidates are annotated
+by hand.
+
+![Coronal sections of four brains with their test regions](docs/images/brains_and_test_regions.png)
+
+**Annotation and training.** In napari every candidate of a test region gets rings: solid green = you said cell,
+solid red = not a cell, light green / red = what the network says, magenta = you and the network disagree.
+
+![The annotation widget in napari, with the rings on a test region](docs/images/napari_annotation.png)
+
+**Cells in the whole brain.** The trained network classifies every candidate of the brain.
+
+![Close-up of the cFos image with the detected cells](docs/images/cells_close_up.png)
+
+**Registration.** The autofluorescence is matched to the Allen atlas (brainreg); every cell then gets its atlas
+region.
+
+![A brain registered to the Allen atlas](docs/images/registration.png)
+
+**Quantification.** Cells per mm³ in every atlas region, for every mouse, and the average of groups of mice
+side by side on the atlas ([`region_figures.ipynb`](examples/figures/region_figures.ipynb)).
+
+![Cell density per atlas region, two groups of mice side by side in sagittal sections](docs/images/atlas_density_sagittal.png)
 
 ## Install
 
@@ -148,7 +186,7 @@ Jupyter notebooks in [`examples/`](examples):
 | [`02_python_api.ipynb`](examples/02_python_api.ipynb) | the same steps as Python functions, with plots |
 | [`03_napari_plugin.ipynb`](examples/03_napari_plugin.ipynb) | opening the plugin, a guided tour of the four widgets |
 | [`run_all_brains.py`](examples/run_all_brains.py) | the whole analysis of every brain of a project on one workstation (run-brain → register → count, then summary), skipping what is done |
-| [`figures/`](examples/figures) | the figure notebooks of our analysis (results, method, pretrained network test) |
+| [`figures/`](examples/figures) | the figure notebooks of our analysis (results, method, pretrained network test, cell density per region and group) |
 
 ## Atlas and left / right
 
